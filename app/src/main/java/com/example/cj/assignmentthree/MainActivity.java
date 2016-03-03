@@ -21,10 +21,11 @@ public class MainActivity extends AppCompatActivity {
 
     private int score = 0;
     public int qid = 0;                                        // Current question, we need this to increment so we can switch questions.
+    public String questionType;
 
     public String currentQID;                                   // Debug QID value only
-    private List<Question> qList;                               // List of questions
-    private Question currentQuestion;                           // Current Question
+    public List<Question> qList;                               // List of questions
+    public Question currentQuestion;                           // Current Question
     public String DebugAnswer;                                  // Debug, delete this
 
     // Default Answers
@@ -36,7 +37,6 @@ public class MainActivity extends AppCompatActivity {
     public Button submitAnswerBtn;
 
     FrameLayout frmLayout;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,65 +52,39 @@ public class MainActivity extends AppCompatActivity {
         QuestionGenerator qGen = new QuestionGenerator();
         qList = qGen.getAllQuestions();                     // Add all the questions from qGen object to a list.
         currentQuestion = qList.get(qid);                   // Get question ID for current QID value
-        String questionType = currentQuestion.getQuestionType();
-        currentQID = currentQuestion.getQID() + "";         // Debug QID value only
+        questionType = currentQuestion.getQuestionType();
 
         txtQuestion = (TextView) findViewById(R.id.question_text);
         scored = (TextView) findViewById(R.id.score);
 
         submitAnswerBtn = (Button) findViewById(R.id.submitAnswerBtn);
 
-        final EditText EditTextAnswer = new EditText(this);
-        final NumberPicker numberPickerAnswer = new NumberPicker(this);
-
         // Start the quiz.
         setQuestionView();
 
-        // Switch case here for type of question
-        switch (questionType){
-            case "stringAnswer":
-                //EditText EditTextAnswer = new EditText(this);
-                frmLayout.addView(EditTextAnswer, 100, 200);
-                EditTextAnswer.setWidth(300);
-                //stringAnswer = EditTextAnswer.getText().toString();
-                break;
-            case "intAnswer":
-                //NumberPicker numberPickerAnswer = new NumberPicker(this);
-                numberPickerAnswer.setMaxValue(9);
-                numberPickerAnswer.setMinValue(0);
-                frmLayout.addView(numberPickerAnswer, 100, 100);
-                //intAnswer = numberPickerAnswer.getValue();
-                break;
-            default: questionType = "N/A";
-                break;
-        }
-
+        //TODO: stringanswer is empty
         // Check Answer with Submit Button
         submitAnswerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getAnswer(numberPickerAnswer.getValue(), EditTextAnswer.getText().toString());
+                switch(questionType){
+                    case "stringAnswer":
+                        Toast.makeText(getApplicationContext(), stringAnswer, Toast.LENGTH_LONG).show();
+
+                        //checkStringAnswer(stringAnswer);
+//                        checkStringAnswer(EditTextAnswer.getText().toString());
+                        break;
+                    case "intAnswer":
+                        checkIntAnswer(intAnswer);
+//                        checkIntAnswer(numberPickerAnswer.getValue());
+                        break;
+                    default: throw new RuntimeException("unreachable");
+                }
             }
         });
-
-        Toast.makeText(getApplicationContext(), stringAnswer, Toast.LENGTH_LONG).show();
-
     }
 
-    // Test user choice for correct answer
-    public void getAnswer(int intAnswer, String stringAnswer) {
-        if (intAnswer > -1) {
-            if(currentQuestion.getIntAnswer() == intAnswer){
-                score++;                                        // Increment Score
-                scored.setText("Score: " + score + "/3");       // Update score text displayed to user
-                Toast.makeText(getApplicationContext(), "Correct", Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(getApplicationContext(), "Incorrect", Toast.LENGTH_LONG).show();
-            }
-        } else {
-            Toast.makeText(getApplicationContext(), "STRING NULL", Toast.LENGTH_LONG).show();
-        }
-
+    public void checkStringAnswer(String stringAnswer){
         if (stringAnswer != null && !stringAnswer.isEmpty()) {
             if((currentQuestion.getStrAnswer()).equals(stringAnswer)){
                 score++;                                        // Increment Score
@@ -119,18 +93,27 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(getApplicationContext(), "Incorrect", Toast.LENGTH_LONG).show();
             }
-        } else {
-            Toast.makeText(getApplicationContext(), "STRING NULL", Toast.LENGTH_LONG).show();
         }
+        gameStatus();
+    }
 
-        // Remove previous question view to make room for the next.
-//        frmLayout.removeAllViews();
+    public void checkIntAnswer(int intAnswer) {
+        if (currentQuestion.getIntAnswer() == intAnswer) {
+            score++;                                        // Increment Score
+            scored.setText("Score: " + score + "/3");       // Update score text displayed to user
+            Toast.makeText(getApplicationContext(), "Correct", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getApplicationContext(), "Incorrect", Toast.LENGTH_LONG).show();
+        }
+        gameStatus();
+    }
 
-        //If current Question ID is less than 3, keep incrementing, otherwise, end game and go to Results layout.
+    private void gameStatus(){
         if (qid < 3) {
             Toast.makeText(getApplicationContext(), "QID++", Toast.LENGTH_LONG).show();
             qid++; // Increase Question ID to switch to the next question.
             currentQuestion = qList.get(qid);
+            frmLayout.removeAllViews();
             setQuestionView();
         } else {
             endGame();
@@ -149,8 +132,30 @@ public class MainActivity extends AppCompatActivity {
 
     // Start the quiz by setting the question text to the first question in our list.
     private void setQuestionView() {
+        questionType = currentQuestion.getQuestionType();
+
         txtQuestion.setText("" + currentQuestion.getQuestionStr());
 
+        EditText EditTextAnswer = new EditText(this);
+        NumberPicker numberPickerAnswer = new NumberPicker(this);
+
+        // Switch case here for type of question
+        switch (questionType){
+            case "stringAnswer":
+                Toast.makeText(getApplicationContext(), "stringAnswer", Toast.LENGTH_LONG).show();
+                EditTextAnswer.setWidth(700);
+                frmLayout.addView(EditTextAnswer, 500, 200);
+                stringAnswer = EditTextAnswer.getText().toString();
+                break;
+            case "intAnswer":
+                Toast.makeText(getApplicationContext(), "intAnswer", Toast.LENGTH_LONG).show();
+                numberPickerAnswer.setMaxValue(9);
+                numberPickerAnswer.setMinValue(0);
+                frmLayout.addView(numberPickerAnswer, 200, 200);
+                intAnswer = numberPickerAnswer.getValue();
+                break;
+            default: throw new RuntimeException("unreachable");
+        }
 
 
     }
